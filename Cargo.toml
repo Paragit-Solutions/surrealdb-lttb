@@ -1,0 +1,10 @@
+[package]
+name = "surrealdb-lttb"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+surrealdb = {version = "1.5.3", features = ["kv-mem"]}
+
+[dependencies]
+tokio = "1.38.0"

@@ -1,0 +1,3 @@
+lttb
+numpy
+matplotlib
