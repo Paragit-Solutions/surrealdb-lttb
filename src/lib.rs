@@ -240,10 +240,8 @@ mod tests {
         file_path: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let motion_data = read_motion_data_flexible(file_path)?;
-        let start = Instant::now();
         let motion_data_flexible = MotionDataFlexible { data: motion_data };
         insert_test_data_flexible(db, motion_data_flexible).await?;
-        dbg!(start.elapsed());
 
         Ok(())
     }
@@ -317,10 +315,11 @@ mod tests {
         //     .await
         //     .expect("Failed to select motion_flexible");
         // let result: Response = db.query(FLEXIBLE_QUERY).await.expect("Failed to query");
+        let start = Instant::now();
         let result: Response = db
             .query(FLEXIBLE_QUERY_LTTB)
             .await
             .expect("Failed to query");
-        dbg!(result);
+        dbg!(start.elapsed());
     }
 }

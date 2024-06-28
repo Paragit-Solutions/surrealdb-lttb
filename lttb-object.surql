@@ -1,5 +1,5 @@
 DEFINE FUNCTION fn::lttb($data: array<object>, $threshold: int, $columns: array<string>) {
-    RETURN SELECT VALUE function($data, $threshold, $columns) {
+    RETURN SELECT * FROM function($data, $threshold, $columns) {
         const [data, threshold, columns] = arguments;
         const n = data.length;
         if (threshold >= n || threshold === 0) {
@@ -66,5 +66,5 @@ DEFINE FUNCTION fn::lttb($data: array<object>, $threshold: int, $columns: array<
         }
 
         return sampled;
-      } FROM $data;
+      };
 }
