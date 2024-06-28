@@ -114,3 +114,5 @@ The last SELECT statement returns the following:
 pip install -r requirements.txt
 python main.py
 ```
+
+If you're using Rust for querying surrealdb, check the code in src/lib.rs. The code there may be helpful.
