@@ -3,10 +3,14 @@ name = "surrealdb-lttb"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+benchmark = []
+
 [dev-dependencies]
+derive_more = "0.99.18"
 dotenvy = "0.15.7"
 serde = { version = "1.0.203", features = ["derive"] }
 surrealdb = {version = "1.5.3", features = ["kv-mem"]}
-
-[dependencies]
+futures = "0.3.30"
 tokio = "1.38.0"
+rand = "0.8.5"

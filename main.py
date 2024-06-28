@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from os import system
 from lttb import downsample
 import glob
 import matplotlib.gridspec as gridspec
@@ -12,8 +11,6 @@ def read_int16_file(filename):
     with open(filename, 'rb') as f:
         buffer = f.read()
     data = np.frombuffer(buffer, dtype=np.int16)
-    if len(data) % 6 != 0:
-        raise ValueError("Data length is not a multiple of 6")
     data = data.reshape(-1, 6)
     return data
 
@@ -48,35 +45,29 @@ column_map = {
 }
 col_idx = column_map[args.column]
 
-# Run the JavaScript code to generate downsampled data
-system('./run-test.sh')
-
-# Read the data
+# Read the original data
 original_data = read_int16_file('data/motion.dat')
 original_column_data = np.column_stack(
     (np.arange(len(original_data)), original_data[:, col_idx]))
 
-# Find all downsampled files from both JavaScript and Python
-js_files = sorted(glob.glob('data/downsampled_*.dat'))
-py_ratios = [0.8, 0.5, 0.2, 0.1, 0.05, 0.01]
-
-# Read JavaScript downsampled data
-js_data = {
-    float(file.split('_')[1].split('.')[0]) / 100:
-    read_int16_file(file)[:, col_idx]
-    for file in js_files
+# Find all downsampled files
+downsampled_files = sorted(glob.glob(f'data/motion-*.dat'))
+downsampled_data = {
+    int(file.split('-')[-1].split('.')[0]): read_int16_file(file)[:, col_idx]
+    for file in downsampled_files
 }
 
-# Downsample using Python
+# Downsample using Python LTTB implementation
+py_ratios = [80, 50, 20, 10, 5, 1]
 py_data = {}
 for ratio in py_ratios:
-    size = max(2, int(len(original_column_data) * ratio))
+    size = max(2, int(len(original_column_data) * ratio / 100))
     py_data[ratio] = downsample(original_column_data, size)
 
 # Ensure correct format for JavaScript data
-js_data = {
+downsampled_data = {
     k: np.column_stack((np.arange(len(v)), v))
-    for k, v in js_data.items()
+    for k, v in downsampled_data.items()
 }
 
 # Set up the plot with GridSpec
@@ -93,9 +84,9 @@ draw_chart(ax0, original_column_data, "Original Data", 'red')
 for i, ratio in enumerate(py_ratios):
     ax_js = fig.add_subplot(gs[i + 1, 0])
     ax_py = fig.add_subplot(gs[i + 1, 1])
-    title_js = f"JavaScript {ratio * 100:.0f}% ({len(js_data[ratio])} points)"
-    title_py = f"Python {ratio * 100:.0f}% ({len(py_data[ratio])} points)"
-    draw_chart(ax_js, js_data[ratio], title_js, 'green')
+    title_js = f"JavaScript {ratio}% ({len(downsampled_data[ratio])} points)"
+    title_py = f"Python {ratio}% ({len(py_data[ratio])} points)"
+    draw_chart(ax_js, downsampled_data[ratio], title_js, 'green')
     draw_chart(ax_py, py_data[ratio], title_py, 'blue')
 
 # Adjust layout to make sure everything fits well
