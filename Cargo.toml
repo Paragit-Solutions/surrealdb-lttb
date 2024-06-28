@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dev-dependencies]
+dotenvy = "0.15.7"
+serde = { version = "1.0.203", features = ["derive"] }
 surrealdb = {version = "1.5.3", features = ["kv-mem"]}
 
 [dependencies]

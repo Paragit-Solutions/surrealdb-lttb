@@ -52,7 +52,7 @@ col_idx = column_map[args.column]
 system('./run-test.sh')
 
 # Read the data
-original_data = read_int16_file('data/imu.dat')
+original_data = read_int16_file('data/motion.dat')
 original_column_data = np.column_stack(
     (np.arange(len(original_data)), original_data[:, col_idx]))
 
@@ -104,23 +104,3 @@ plt.show()
 
 # Save the plot as a PNG file
 fig.savefig('test-output-plot.png')
-
-# Read the contents of "lttb.js"
-with open('lttb.js', 'r') as file:
-    lttb_js_content = file.read()
-
-# Generate the SurrealDB surql function with proper indentation
-surql_function = f'''
-DEFINE FUNCTION fn::lttb($data: array<object>, $threshold: int, $columns: array<string>) {{
-    RETURN SELECT VALUE function($data, $threshold, $columns) {{
-        {lttb_js_content.replace("\\", "\\\\").replace("\n", "\n        ")}
-        return lttb(data, threshold, columns);
-    }} FROM type::table($table);
-}}
-'''
-
-# Save it to "lttb.surql"
-with open('lttb-object.surql', 'w') as file:
-    file.write(surql_function)
-
-print("Surql function saved to lttb.surql")

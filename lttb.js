@@ -1,4 +1,5 @@
-function lttb(data, threshold, columns) {
+function lttb($data, $threshold, $columns) {
+  const [data, threshold, columns] = arguments;
   const n = data.length;
   if (threshold >= n || threshold === 0) {
     return data; // Nothing to do

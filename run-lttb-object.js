@@ -39,7 +39,7 @@ function writeInt16File(filename, data) {
 }
 
 // Read the data
-const data = readInt16File("data/imu.dat");
+const data = readInt16File("data/motion.dat");
 
 // Validate data
 if (!data || data.length === 0) {

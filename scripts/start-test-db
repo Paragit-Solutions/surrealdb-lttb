@@ -1,0 +1,19 @@
+#!/bin/bash
+NAME=surrealdb
+podman kill $NAME
+podman rm -f $NAME
+
+source .env
+
+podman run -it \
+    -p 8000:8000 \
+    --name $NAME \
+    surrealdb/surrealdb:v1.5.3 \
+    start --log trace \
+    --strict \
+    --auth \
+    -A \
+    --no-banner \
+    --user $SURREALDB_USER \
+    --pass $SURREALDB_PASSWORD \
+    memory | sed -r 's/\x1B\[[0-9;]*[mK]//g; G'
