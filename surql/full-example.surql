@@ -1,19 +1,3 @@
-# Downsampling Comparison
-
-This repository contains a javascript implementation of the LTTB algorithm written in surql specifically for use in surrealdb.
-
-## Plot
-
-Below is a plot comparing the original data with the downsampled data at various ratios for both the JavaScript (surrealdb embedded scripting function) and Python implementation.
-
-![Downsampling Comparison](test-output-plot.png)
-
-## Full surql implementation example
-
-Remember enable scripting functions on your surrealdb instance.
-If you want to enable strict mode you'll need to define the namespace and database first for the example to work as-is.
-
-```sql
 USE NS test DB test;
 
 DEFINE TABLE motion SCHEMAFULL;
@@ -91,26 +75,3 @@ CREATE motion:id CONTENT {
 };
 
 SELECT fn::lttb(ax, 5) FROM motion:id;
-```
-
-The last SELECT statement returns the following:
-
-```json
-[
-    {"fn::lttb": [
-            [0f, 1f],
-            [1f, 2f],
-            [3f, 4f],
-            [6f, 7f],
-            [9f, 10f]
-        ]
-    }
-]
-```
-
-## How to run the test
-
-```bash
-pip install -r requirements.txt
-python main.py
-```

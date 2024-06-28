@@ -2,19 +2,16 @@
 mod tests {
     use derive_more::Deref;
     use futures::future::join_all;
-    use rand::Rng;
     use serde::{Deserialize, Serialize};
     use std::fs::File;
     use std::io::{self, BufReader, Read, Write};
     use std::sync::Arc;
-    use std::time::Instant;
     use surrealdb::engine::remote::ws::{Client, Ws};
     use surrealdb::opt::auth::Root;
     use surrealdb::Connection;
     use surrealdb::Surreal;
 
     static MOTION_ID: &str = "id";
-    static BENCH_ID: &str = "bench";
     static MOTION_DATA_FILE_PATH: &str = "data/motion.dat";
     static LTTB_OBJECT: &str =
         include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/surql/lttb.surql"));
@@ -150,22 +147,6 @@ mod tests {
         Ok(motion_data)
     }
 
-    fn generate_random_motion_data(length: usize) -> MotionData {
-        let mut rng = rand::thread_rng();
-        let mut data = MotionData::default();
-        for _ in 0..length {
-            data.add_motion(Motion {
-                ax: rng.gen(),
-                ay: rng.gen(),
-                az: rng.gen(),
-                gx: rng.gen(),
-                gy: rng.gen(),
-                gz: rng.gen(),
-            });
-        }
-        data
-    }
-
     async fn query_lttb(
         db: &Surreal<Client>,
         record_id: &str,
@@ -247,37 +228,6 @@ mod tests {
                 .await
                 .expect("Failed to save to file");
         }
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "benchmark")]
-    async fn benchmark_query() {
-        let db = get_ws_db().await;
-        define_functions(&db)
-            .await
-            .expect("Failed to define functions");
-        define_motion_table(&db)
-            .await
-            .expect("Failed to define motion table");
-
-        // Adjust the length of the data as needed
-        let length = 50000;
-        let motion_data = generate_random_motion_data(length);
-        insert_test_data(&db, BENCH_ID, &motion_data)
-            .await
-            .expect("Failed to insert test data");
-
-        let db = Arc::new(db);
-        let column = "ax";
-        let n_out = (length * 10 / 100).max(2); // 10% of the total length
-
-        let start_time = Instant::now();
-        query_lttb(db.as_ref(), "motion", column, n_out)
-            .await
-            .expect("Failed to query");
-        let duration = start_time.elapsed();
-
-        println!("Query duration: {:?}", duration);
     }
 
     async fn get_ws_db_with_setup() -> (MotionData, Surreal<Client>) {

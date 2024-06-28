@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from lttb import downsample
+from subprocess import run
 import glob
 import matplotlib.gridspec as gridspec
 
@@ -33,6 +34,8 @@ parser.add_argument(
     help="Column to visualize (default: ax)",
 )
 args = parser.parse_args()
+
+run(['cargo', 'test'])
 
 # Map column names to indices
 column_map = {

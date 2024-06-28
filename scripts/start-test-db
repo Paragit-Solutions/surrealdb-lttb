@@ -5,12 +5,11 @@ podman rm -f $NAME
 
 source .env
 
-podman run -it \
+podman run -d \
     -p 8000:8000 \
     --name $NAME \
     surrealdb/surrealdb:v1.5.3 \
     start --log trace \
-    --strict \
     --auth \
     -A \
     --no-banner \
