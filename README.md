@@ -10,7 +10,7 @@ Below is a plot comparing the original data with the downsampled data at various
 
 ## Full surql implementation example
 
-Remember enable scripting functions on your surrealdb instance.
+Remember to enable scripting functions on your surrealdb instance.
 If you want to enable strict mode you'll need to define the namespace and database first for the example to work as-is.
 
 ```sql

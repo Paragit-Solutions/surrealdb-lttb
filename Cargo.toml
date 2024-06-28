@@ -1,6 +1,6 @@
 [package]
 name = "surrealdb-lttb"
-version = "0.0.1"
+version = "0.0.3"
 edition = "2021"
 
 [dev-dependencies]
