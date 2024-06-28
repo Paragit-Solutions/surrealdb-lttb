@@ -95,7 +95,7 @@ SELECT fn::lttb(ax, 5) FROM motion:id;
 
 The last SELECT statement returns the following:
 
-```json
+```
 [
     {"fn::lttb": [
             [0f, 1f],
