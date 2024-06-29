@@ -3,6 +3,7 @@ mod tests {
     use derive_more::Deref;
     use futures::future::join_all;
     use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
     use std::fs::File;
     use std::io::{self, BufReader, Read, Write};
     use std::sync::Arc;
@@ -13,8 +14,11 @@ mod tests {
 
     static MOTION_ID: &str = "id";
     static MOTION_DATA_FILE_PATH: &str = "data/motion.dat";
-    static LTTB_OBJECT: &str =
-        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/surql/lttb.surql"));
+    static LTTB: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/surql/lttb.surql"));
+    static LTTB_OBJECT_WITH_ARRAY: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/surql/lttb-fields.surql"
+    ));
     static MOTION_TABLE_NAME: &str = "motion";
     static MOTION_TABLE: &str = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -52,10 +56,22 @@ mod tests {
         gz: i16,
     }
 
-    #[derive(Debug, Serialize, Deserialize, Deref)]
-    struct LttbResult {
-        #[serde(rename = "fn::lttb")]
-        value: Vec<(f32, f32)>,
+    mod result {
+        use std::collections::HashMap;
+
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize, Deref)]
+        pub struct Standard {
+            #[serde(rename = "fn::lttb")]
+            pub value: Vec<(f32, f32)>,
+        }
+
+        #[derive(Debug, Serialize, Deserialize, Deref)]
+        pub struct Columns {
+            #[serde(rename = "fn::lttb_columns")]
+            pub value: Vec<HashMap<String, (f32, f32)>>,
+        }
     }
 
     async fn get_ws_db() -> Surreal<Client> {
@@ -102,7 +118,8 @@ mod tests {
     }
 
     async fn define_functions<C: Connection>(db: &Surreal<C>) -> Result<(), surrealdb::Error> {
-        db.query(LTTB_OBJECT).await?.check()?;
+        db.query(LTTB).await?.check()?;
+        db.query(LTTB_OBJECT_WITH_ARRAY).await?.check()?;
         Ok(())
     }
 
@@ -154,7 +171,24 @@ mod tests {
         n_out: usize,
     ) -> Result<Vec<(f32, f32)>, surrealdb::Error> {
         let query = format!("SELECT fn::lttb({}, {}) FROM {}", column, n_out, record_id);
-        let result: Vec<LttbResult> = db.query(query).await?.take(0).expect("Failed to take");
+        let result: Vec<result::Standard> = db.query(query).await?.take(0).expect("Failed to take");
+        Ok(result.first().expect("Failed to get").value.to_owned())
+    }
+
+    async fn query_lttb_columns(
+        db: &Surreal<Client>,
+        record_id: &str,
+        columns: &[&str],
+        n_out: usize,
+    ) -> Result<Vec<HashMap<String, (f32, f32)>>, surrealdb::Error> {
+        let query = format!(
+            "SELECT fn::lttb_fields({}, [{}], {})",
+            record_id,
+            columns.join(", "),
+            n_out,
+        );
+        dbg!(&query);
+        let result: Vec<result::Columns> = db.query(query).await?.take(0).expect("Failed to take");
         Ok(result.first().expect("Failed to get").value.to_owned())
     }
 
@@ -228,6 +262,38 @@ mod tests {
                 .await
                 .expect("Failed to save to file");
         }
+    }
+
+    #[tokio::test]
+    async fn test_lttb_on_object() {
+        let db = get_ws_db().await;
+        define_functions(&db)
+            .await
+            .expect("Failed to define functions");
+        define_motion_table(&db)
+            .await
+            .expect("Failed to define motion table");
+
+        // Insert test data
+        let motion_data = MotionData {
+            ax: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            ay: vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            az: vec![1, 3, 5, 7, 9, 11, 13, 15, 17, 19],
+            gx: vec![19, 17, 15, 13, 11, 9, 7, 5, 3, 1],
+            gy: vec![5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+            gz: vec![0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        };
+        insert_test_data(&db, "test_id", &motion_data)
+            .await
+            .expect("Failed to insert test data");
+
+        let columns = ["ax", "ay", "az", "gx", "gy", "gz"];
+        let n_out = 5;
+        let result = query_lttb_columns(&db, "test_id", &columns, n_out)
+            .await
+            .expect("Failed to query");
+
+        dbg!(&result);
     }
 
     async fn get_ws_db_with_setup() -> (MotionData, Surreal<Client>) {
